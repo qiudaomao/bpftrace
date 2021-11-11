@@ -40,6 +40,11 @@ bool TracepointFormatParser::parse(ast::Program *program, BPFtrace &bpftrace)
         std::string &category = ap->target;
         std::string &event_name = ap->func;
         std::string format_file_path = "/sys/kernel/debug/tracing/events/" + category + "/" + event_name + "/format";
+        bool use_new_path = false;
+        if (std::ifstream(format_file_path).fail()) {
+          format_file_path = "/sys/kernel/tracing/events/" + category + "/" + event_name + "/format";
+          use_new_path = true;
+        }
         glob_t glob_result;
 
         if (has_wildcard(category) || has_wildcard(event_name))
@@ -80,6 +85,9 @@ bool TracepointFormatParser::parse(ast::Program *program, BPFtrace &bpftrace)
             std::string filename(glob_result.gl_pathv[i]);
             std::ifstream format_file(filename);
             std::string prefix("/sys/kernel/debug/tracing/events/");
+            if (use_new_path) {
+              prefix = "/sys/kernel/tracing/events/";
+            }
             size_t pos = prefix.length();
             std::string real_category = filename.substr(
                 pos, filename.find('/', pos) - pos);

@@ -776,6 +776,14 @@ std::unordered_set<std::string> get_traceable_funcs()
     path = kprobe_path.c_str();
 
   std::ifstream available_funs(path);
+  if (available_funs.fail()) {
+    path = kprobe_path_new.c_str();
+    available_funs = std::ifstream(path);
+  }
+  if (available_funs.fail()) {
+    path = kallsyms_path.c_str();
+    available_funs = std::ifstream(path);
+  }
   if (available_funs.fail())
   {
     if (bt_debug != DebugLevel::kNone)
@@ -792,8 +800,9 @@ std::unordered_set<std::string> get_traceable_funcs()
   {
     if (symbol_has_module(line))
       result.insert(strip_symbol_module(line));
-    else
-      result.insert(line);
+    else {
+      result.insert(strip_symbol_addr_and_type(line));
+    }
   }
   return result;
 #endif
@@ -977,6 +986,18 @@ uint64_t max_value(const std::vector<uint8_t> &value, int nvalues)
 bool symbol_has_module(const std::string &symbol)
 {
   return !symbol.empty() && symbol[symbol.size() - 1] == ']';
+}
+
+std::string strip_symbol_addr_and_type(const std::string &symbol)
+{
+  size_t idx_start = symbol.rfind(" ");
+  size_t idx_end = symbol.rfind("\t[");
+  if (idx_start != std::string::npos && idx_end != std::string::npos) {
+    return symbol.substr(idx_start+1, idx_end-idx_start-1);
+  } else if (idx_start != std::string::npos) {
+    return symbol.substr(idx_start+1, symbol.length()-1);
+  }
+  return symbol;
 }
 
 std::string strip_symbol_module(const std::string &symbol)

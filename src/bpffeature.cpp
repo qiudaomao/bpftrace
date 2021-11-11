@@ -80,6 +80,9 @@ static bool try_load(enum libbpf::bpf_prog_type prog_type,
   {
     // List of available functions must be readable
     std::ifstream traceable_funcs(kprobe_path);
+    if (traceable_funcs.fail()) {
+      traceable_funcs = std::ifstream(kprobe_path_new);
+    }
     // bcc checks the name (first arg) for the magic strings. If the bcc we
     // build against doesn't support kfunc then we will fail here. That's fine
     // because it still means kfunc doesn't work, only from a library side, not

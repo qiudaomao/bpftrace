@@ -77,6 +77,7 @@ std::set<std::string> ProbeMatcher::get_matches_in_stream(
     {
       line = strip_symbol_module(line);
     }
+    line = strip_symbol_addr_and_type(line);
 
     if (!wildcard_match(line, tokens, start_wildcard, end_wildcard))
     {
@@ -135,7 +136,14 @@ std::set<std::string> ProbeMatcher::get_matches_for_probetype(
     case ProbeType::kprobe:
     case ProbeType::kretprobe:
     {
-      symbol_stream = get_symbols_from_file(kprobe_path);
+      std::ifstream stream1(kprobe_path_new);
+      std::ifstream stream2(kallsyms_path);
+      if (stream1.good())
+        symbol_stream = get_symbols_from_file(kprobe_path_new);
+      else if (stream2.good())
+        symbol_stream = get_symbols_from_file(kallsyms_path);
+      else
+        symbol_stream = get_symbols_from_file(kprobe_path);
       ignore_trailing_module = true;
       break;
     }
@@ -149,7 +157,12 @@ std::set<std::string> ProbeMatcher::get_matches_for_probetype(
     }
     case ProbeType::tracepoint:
     {
-      symbol_stream = get_symbols_from_file(tp_avail_path);
+      std::ifstream stream1(tp_avail_path);
+      if (stream1.good()) {
+        symbol_stream = get_symbols_from_file(tp_avail_path);
+      } else {
+        symbol_stream = get_symbols_from_file(tp_avail_path_new);
+      }
       break;
     }
     case ProbeType::usdt:
@@ -372,6 +385,11 @@ FuncParamLists ProbeMatcher::get_tracepoints_params(
                                    "/format";
     std::ifstream format_file(format_file_path.c_str());
     std::string line;
+    if (format_file.fail()) {
+      format_file_path = tp_path_new + "/" + category + "/" + event +
+                                     "/format";
+      format_file = std::ifstream(format_file_path.c_str());
+    }
 
     if (format_file.fail())
     {

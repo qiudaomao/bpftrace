@@ -10,9 +10,15 @@
 namespace bpftrace {
 
 const std::string kprobe_path =
-    "/sys/kernel/debug/tracing/available_filter_functions";
-const std::string tp_avail_path = "/sys/kernel/debug/tracing/available_events";
-const std::string tp_path = "/sys/kernel/debug/tracing/events";
+    "/sys/kernel/tracing/available_filter_functions";
+const std::string kprobe_path_new =
+    "/sys/kernel/tracing/available_filter_functions";
+const std::string kallsyms_path =
+    "/proc/kallsyms";
+const std::string tp_avail_path = "/sys/kernel/tracing/available_events";
+const std::string tp_avail_path_new = "/sys/kernel/debug/tracing/available_events";
+const std::string tp_path = "/sys/kernel/tracing/events";
+const std::string tp_path_new = "/sys/kernel/debug/tracing/events";
 
 struct ProbeListItem
 {
